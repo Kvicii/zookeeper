@@ -23,7 +23,6 @@ import org.apache.zookeeper.KeeperException;
 /**
  * A callback object which can be used for implementing retry-able operations in the
  * {@link org.apache.zookeeper.recipes.lock.ProtocolSupport} class.
- *
  */
 public interface ZooKeeperOperation {
 

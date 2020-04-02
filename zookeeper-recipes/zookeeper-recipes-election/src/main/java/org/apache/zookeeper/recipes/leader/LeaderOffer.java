@@ -23,6 +23,7 @@ import java.util.Comparator;
 /**
  * A leader offer is a numeric id / path pair. The id is the sequential node id
  * assigned by ZooKeeper where as the path is the absolute path to the ZNode.
+ * leader 选举请求的POJO
  */
 public class LeaderOffer {
 
@@ -43,10 +44,10 @@ public class LeaderOffer {
     @Override
     public String toString() {
         return "{"
-            + " id:" + id
-            + " nodePath:" + nodePath
-            + " hostName:" + hostName
-            + " }";
+                + " id:" + id
+                + " nodePath:" + nodePath
+                + " hostName:" + hostName
+                + " }";
     }
 
     public Integer getId() {
@@ -78,7 +79,7 @@ public class LeaderOffer {
      * member.
      */
     public static class IdComparator
-        implements Comparator<LeaderOffer>, Serializable {
+            implements Comparator<LeaderOffer>, Serializable {
 
         @Override
         public int compare(LeaderOffer o1, LeaderOffer o2) {

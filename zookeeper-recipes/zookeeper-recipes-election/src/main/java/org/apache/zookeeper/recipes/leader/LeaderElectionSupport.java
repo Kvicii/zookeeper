@@ -17,11 +17,6 @@
 
 package org.apache.zookeeper.recipes.leader;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -31,6 +26,12 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A leader election support library implementing the ZooKeeper election recipe.
@@ -85,6 +86,7 @@ import org.slf4j.LoggerFactory;
  * the entire process and thus the connection to ZK and the leader offer
  * resulting in another round of leader determination.</li>
  * </ul>
+ * 分布式选举的实现
  */
 public class LeaderElectionSupport implements Watcher {
 
@@ -115,6 +117,7 @@ public class LeaderElectionSupport implements Watcher {
      * Any (anticipated) failures result in a failed event being sent to all
      * listeners.
      * </p>
+     * 开始选举
      */
     public synchronized void start() {
         state = State.START;
@@ -124,16 +127,16 @@ public class LeaderElectionSupport implements Watcher {
 
         if (zooKeeper == null) {
             throw new IllegalStateException(
-                "No instance of zookeeper provided. Hint: use setZooKeeper()");
+                    "No instance of zookeeper provided. Hint: use setZooKeeper()");
         }
 
         if (hostName == null) {
             throw new IllegalStateException(
-                "No hostname provided. Hint: use setHostName()");
+                    "No hostname provided. Hint: use setHostName()");
         }
 
         try {
-            makeOffer();
+            makeOffer();    // 发起选举请求
             determineElectionStatus();
         } catch (KeeperException | InterruptedException e) {
             becomeFailed(e);
@@ -171,9 +174,10 @@ public class LeaderElectionSupport implements Watcher {
         synchronized (this) {
             newLeaderOffer.setHostName(hostName);
             hostnameBytes = hostName.getBytes();
+            // 选举请求的znode
             newLeaderOffer.setNodePath(zooKeeper.create(rootNodeName + "/" + "n_",
-                                                        hostnameBytes, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                                                        CreateMode.EPHEMERAL_SEQUENTIAL));
+                    hostnameBytes, ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.EPHEMERAL_SEQUENTIAL));
             leaderOffer = newLeaderOffer;
         }
         LOG.debug("Created leader offer {}", leaderOffer);
@@ -195,7 +199,7 @@ public class LeaderElectionSupport implements Watcher {
         String[] components = currentLeaderOffer.getNodePath().split("/");
 
         currentLeaderOffer.setId(Integer.valueOf(components[components.length - 1].substring("n_".length())));
-
+        // 将选举目录节点下所有的子节点返回 按照序号排序
         List<LeaderOffer> leaderOffers = toLeaderOffers(zooKeeper.getChildren(rootNodeName, false));
 
         /*
@@ -211,10 +215,11 @@ public class LeaderElectionSupport implements Watcher {
                 LOG.debug("There are {} leader offers. I am {} in line.", leaderOffers.size(), i);
 
                 dispatchEvent(EventType.DETERMINE_COMPLETE);
-
                 if (i == 0) {
+                    // 当前节点为集合的第一个节点 称为leader
                     becomeLeader();
                 } else {
+                    // 不是第一个节点 需要等待
                     becomeReady(leaderOffers.get(i - 1));
                 }
 
@@ -225,34 +230,37 @@ public class LeaderElectionSupport implements Watcher {
     }
 
     private void becomeReady(LeaderOffer neighborLeaderOffer)
-        throws KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
 
         LOG.info(
-            "{} not elected leader. Watching node: {}",
-            getLeaderOffer().getNodePath(),
-            neighborLeaderOffer.getNodePath());
+                "{} not elected leader. Watching node: {}",
+                getLeaderOffer().getNodePath(),
+                neighborLeaderOffer.getNodePath());
 
         /*
          * Make sure to pass an explicit Watcher because we could be sharing this
          * zooKeeper instance with someone else.
+         * watch 前一个节点的选举请求
          */
         Stat stat = zooKeeper.exists(neighborLeaderOffer.getNodePath(), this);
 
         if (stat != null) {
+            // 前一个选举请求存在则等待
             dispatchEvent(EventType.READY_START);
             LOG.debug(
-                "We're behind {} in line and they're alive. Keeping an eye on them.",
-                neighborLeaderOffer.getNodePath());
+                    "We're behind {} in line and they're alive. Keeping an eye on them.",
+                    neighborLeaderOffer.getNodePath());
             state = State.READY;
             dispatchEvent(EventType.READY_COMPLETE);
         } else {
             /*
              * If the stat fails, the node has gone missing between the call to
              * getChildren() and exists(). We need to try and become the leader.
+             * 前一个选举请求不存在则重试
              */
             LOG.info(
-                "We were behind {} but it looks like they died. Back to determination.",
-                neighborLeaderOffer.getNodePath());
+                    "We were behind {} but it looks like they died. Back to determination.",
+                    neighborLeaderOffer.getNodePath());
             determineElectionStatus();
         }
 
@@ -298,7 +306,7 @@ public class LeaderElectionSupport implements Watcher {
     }
 
     private List<LeaderOffer> toLeaderOffers(List<String> strings)
-        throws KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
 
         List<LeaderOffer> leaderOffers = new ArrayList<>(strings.size());
 
@@ -310,8 +318,8 @@ public class LeaderElectionSupport implements Watcher {
             String hostName = new String(zooKeeper.getData(rootNodeName + "/" + offer, false, null));
 
             leaderOffers.add(new LeaderOffer(
-                Integer.valueOf(offer.substring("n_".length())),
-                rootNodeName + "/" + offer, hostName));
+                    Integer.valueOf(offer.substring("n_".length())),
+                    rootNodeName + "/" + offer, hostName));
         }
 
         /*
@@ -325,13 +333,15 @@ public class LeaderElectionSupport implements Watcher {
 
     @Override
     public void process(WatchedEvent event) {
+        // 前一个节点被删除 收到通知调用此方法
         if (event.getType().equals(Watcher.Event.EventType.NodeDeleted)) {
             if (!event.getPath().equals(getLeaderOffer().getNodePath())
-                && state != State.STOP) {
+                    && state != State.STOP) {
                 LOG.debug(
-                    "Node {} deleted. Need to run through the election process.",
-                    event.getPath());
+                        "Node {} deleted. Need to run through the election process.",
+                        event.getPath());
                 try {
+                    // zk再次确认选举请求能否被满足
                     determineElectionStatus();
                 } catch (KeeperException | InterruptedException e) {
                     becomeFailed(e);
@@ -373,12 +383,12 @@ public class LeaderElectionSupport implements Watcher {
     @Override
     public String toString() {
         return "{"
-            + " state:" + state
-            + " leaderOffer:" + getLeaderOffer()
-            + " zooKeeper:" + zooKeeper
-            + " hostName:" + getHostName()
-            + " listeners:" + listeners
-            + " }";
+                + " state:" + state
+                + " leaderOffer:" + getLeaderOffer()
+                + " zooKeeper:" + zooKeeper
+                + " hostName:" + getHostName()
+                + " listeners:" + listeners
+                + " }";
     }
 
     /**

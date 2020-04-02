@@ -18,23 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -59,6 +42,24 @@ import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 /**
  * This class maintains the in memory database of zookeeper
@@ -103,6 +104,7 @@ public class ZKDatabase {
      * the filetxnsnaplog that this zk database
      * maps to. There is a one to one relationship
      * between a filetxnsnaplog and zkdatabase.
+     *
      * @param snapLog the FileTxnSnapLog mapping this zkdatabase
      */
     public ZKDatabase(FileTxnSnapLog snapLog) {
@@ -117,15 +119,15 @@ public class ZKDatabase {
             if (snapshotSizeFactor > 1) {
                 snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
                 LOG.warn(
-                    "The configured {} is invalid, going to use the default {}",
-                    SNAPSHOT_SIZE_FACTOR,
-                    DEFAULT_SNAPSHOT_SIZE_FACTOR);
+                        "The configured {} is invalid, going to use the default {}",
+                        SNAPSHOT_SIZE_FACTOR,
+                        DEFAULT_SNAPSHOT_SIZE_FACTOR);
             }
         } catch (NumberFormatException e) {
             LOG.error(
-                "Error parsing {}, using default value {}",
-                SNAPSHOT_SIZE_FACTOR,
-                DEFAULT_SNAPSHOT_SIZE_FACTOR);
+                    "Error parsing {}, using default value {}",
+                    SNAPSHOT_SIZE_FACTOR,
+                    DEFAULT_SNAPSHOT_SIZE_FACTOR);
             snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
         }
 
@@ -138,15 +140,15 @@ public class ZKDatabase {
             if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
                 commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
                 LOG.warn(
-                    "The configured commitLogCount {} is less than the recommended {}, going to use the recommended one",
-                    COMMIT_LOG_COUNT,
-                    DEFAULT_COMMIT_LOG_COUNT);
+                        "The configured commitLogCount {} is less than the recommended {}, going to use the recommended one",
+                        COMMIT_LOG_COUNT,
+                        DEFAULT_COMMIT_LOG_COUNT);
             }
         } catch (NumberFormatException e) {
             LOG.error(
-                "Error parsing {} - use default value {}",
-                COMMIT_LOG_COUNT,
-                DEFAULT_COMMIT_LOG_COUNT);
+                    "Error parsing {} - use default value {}",
+                    COMMIT_LOG_COUNT,
+                    DEFAULT_COMMIT_LOG_COUNT);
             commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
         }
         LOG.info("{}={}", COMMIT_LOG_COUNT, commitLogCount);
@@ -155,6 +157,7 @@ public class ZKDatabase {
     /**
      * checks to see if the zk database has been
      * initialized or not.
+     *
      * @return true if zk database is initialized and false if not
      */
     public boolean isInitialized() {
@@ -188,6 +191,7 @@ public class ZKDatabase {
 
     /**
      * the datatree for this zkdatabase
+     *
      * @return the datatree for this zkdatabase
      */
     public DataTree getDataTree() {
@@ -196,6 +200,7 @@ public class ZKDatabase {
 
     /**
      * the committed log for this zk database
+     *
      * @return the committed log for this zkdatabase
      */
     public long getmaxCommittedLog() {
@@ -205,15 +210,18 @@ public class ZKDatabase {
     /**
      * the minimum committed transaction log
      * available in memory
+     *
      * @return the minimum committed transaction
      * log available in memory
      */
     public long getminCommittedLog() {
         return minCommittedLog;
     }
+
     /**
      * Get the lock that controls the committedLog. If you want to get the pointer to the committedLog, you need
      * to use this lock to acquire a read lock before calling getCommittedLog()
+     *
      * @return the lock that controls the committed log
      */
     public ReentrantReadWriteLock getLogLock() {
@@ -239,6 +247,7 @@ public class ZKDatabase {
 
     /**
      * get the last processed zxid from a datatree
+     *
      * @return the last processed zxid of a datatree
      */
     public long getDataTreeLastProcessedZxid() {
@@ -247,6 +256,7 @@ public class ZKDatabase {
 
     /**
      * return the sessions in the datatree
+     *
      * @return the data tree sessions
      */
     public Collection<Long> getSessions() {
@@ -262,6 +272,7 @@ public class ZKDatabase {
 
     /**
      * get sessions with timeouts
+     *
      * @return the hashmap of sessions with timeouts
      */
     public ConcurrentHashMap<Long, Integer> getSessionWithTimeOuts() {
@@ -277,6 +288,7 @@ public class ZKDatabase {
     /**
      * load the database from the disk onto memory and also add
      * the transactions to the committedlog in memory.
+     *
      * @return the last valid zxid on disk
      * @throws IOException
      */
@@ -293,6 +305,7 @@ public class ZKDatabase {
 
     /**
      * Fast forward the database adding transactions from the committed log into memory.
+     *
      * @return the last valid zxid.
      * @throws IOException
      */
@@ -310,8 +323,9 @@ public class ZKDatabase {
 
     /**
      * maintains a list of last <i>committedLog</i>
-     *  or so committed requests. This is used for
+     * or so committed requests. This is used for
      * fast follower synchronization.
+     *
      * @param request committed request
      */
     public void addCommittedProposal(Request request) {
@@ -385,8 +399,8 @@ public class ZKDatabase {
             // after a given zxid, we should fail.
             if ((itr.getHeader() != null) && (itr.getHeader().getZxid() > startZxid)) {
                 LOG.warn(
-                    "Unable to find proposals from txnlog for zxid: 0x{}",
-                    Long.toHexString(startZxid));
+                        "Unable to find proposals from txnlog for zxid: 0x{}",
+                        Long.toHexString(startZxid));
                 itr.close();
                 return TxnLogProposalIterator.EMPTY_ITERATOR;
             }
@@ -416,8 +430,10 @@ public class ZKDatabase {
     public List<ACL> aclForNode(DataNode n) {
         return dataTree.getACL(n);
     }
+
     /**
      * remove a cnxn from the datatree
+     *
      * @param cnxn the cnxn to remove from the datatree
      */
     public void removeCnxn(ServerCnxn cnxn) {
@@ -426,8 +442,9 @@ public class ZKDatabase {
 
     /**
      * kill a given session in the datatree
+     *
      * @param sessionId the session id to be killed
-     * @param zxid the zxid of kill session transaction
+     * @param zxid      the zxid of kill session transaction
      */
     public void killSession(long sessionId, long zxid) {
         dataTree.killSession(sessionId, zxid);
@@ -435,6 +452,7 @@ public class ZKDatabase {
 
     /**
      * write a text dump of all the ephemerals in the datatree
+     *
      * @param pwriter the output to write to
      */
     public void dumpEphemerals(PrintWriter pwriter) {
@@ -447,6 +465,7 @@ public class ZKDatabase {
 
     /**
      * the node count of the datatree
+     *
      * @return the node count of datatree
      */
     public int getNodeCount() {
@@ -455,6 +474,7 @@ public class ZKDatabase {
 
     /**
      * the paths for  ephemeral session id
+     *
      * @param sessionId the session id for which paths match to
      * @return the paths for a session id
      */
@@ -464,6 +484,7 @@ public class ZKDatabase {
 
     /**
      * the last processed zxid in the datatree
+     *
      * @param zxid the last processed zxid in the datatree
      */
     public void setlastProcessedZxid(long zxid) {
@@ -472,8 +493,9 @@ public class ZKDatabase {
 
     /**
      * the process txn on the data and perform digest comparision.
-     * @param hdr the txnheader for the txn
-     * @param txn the transaction that needs to be processed
+     *
+     * @param hdr    the txnheader for the txn
+     * @param txn    the transaction that needs to be processed
      * @param digest the expected digest. A null value would skip the check
      * @return the result of processing the transaction on this
      * datatree/zkdatabase
@@ -484,7 +506,8 @@ public class ZKDatabase {
 
     /**
      * stat the path
-     * @param path the path for which stat is to be done
+     *
+     * @param path       the path for which stat is to be done
      * @param serverCnxn the servercnxn attached to this request
      * @return the stat of this node
      * @throws KeeperException.NoNodeException
@@ -495,6 +518,7 @@ public class ZKDatabase {
 
     /**
      * get the datanode for this path
+     *
      * @param path the path to lookup
      * @return the datanode for getting the path
      */
@@ -504,8 +528,9 @@ public class ZKDatabase {
 
     /**
      * get data and stat for a path
-     * @param path the path being queried
-     * @param stat the stat for this path
+     *
+     * @param path    the path being queried
+     * @param stat    the stat for this path
      * @param watcher the watcher function
      * @return
      * @throws KeeperException.NoNodeException
@@ -516,13 +541,14 @@ public class ZKDatabase {
 
     /**
      * set watches on the datatree
-     * @param relativeZxid the relative zxid that client has seen
-     * @param dataWatches the data watches the client wants to reset
-     * @param existWatches the exists watches the client wants to reset
-     * @param childWatches the child watches the client wants to reset
-     * @param persistentWatches the persistent watches the client wants to reset
+     *
+     * @param relativeZxid               the relative zxid that client has seen
+     * @param dataWatches                the data watches the client wants to reset
+     * @param existWatches               the exists watches the client wants to reset
+     * @param childWatches               the child watches the client wants to reset
+     * @param persistentWatches          the persistent watches the client wants to reset
      * @param persistentRecursiveWatches the persistent recursive watches the client wants to reset
-     * @param watcher the watcher function
+     * @param watcher                    the watcher function
      */
     public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
                            List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
@@ -532,12 +558,9 @@ public class ZKDatabase {
     /**
      * Add a watch
      *
-     * @param basePath
-     *            watch base
-     * @param watcher
-     *            the watcher
-     * @param mode
-     *            a mode from ZooDefs.AddWatchModes
+     * @param basePath watch base
+     * @param watcher  the watcher
+     * @param mode     a mode from ZooDefs.AddWatchModes
      */
     public void addWatch(String basePath, Watcher watcher, int mode) {
         dataTree.addWatch(basePath, watcher, mode);
@@ -545,6 +568,7 @@ public class ZKDatabase {
 
     /**
      * get acl for a path
+     *
      * @param path the path to query for acl
      * @param stat the stat for the node
      * @return the acl list for this path
@@ -556,8 +580,9 @@ public class ZKDatabase {
 
     /**
      * get children list for this path
-     * @param path the path of the node
-     * @param stat the stat of the node
+     *
+     * @param path    the path of the node
+     * @param stat    the stat of the node
      * @param watcher the watcher function for this path
      * @return the list of children for this path
      * @throws KeeperException.NoNodeException
@@ -575,6 +600,7 @@ public class ZKDatabase {
 
     /**
      * check if the path is special or not
+     *
      * @param path the input path
      * @return true if path is special and false if not
      */
@@ -584,6 +610,7 @@ public class ZKDatabase {
 
     /**
      * get the acl size of the datatree
+     *
      * @return the acl size of the datatree
      */
     public int getAclSize() {
@@ -592,6 +619,7 @@ public class ZKDatabase {
 
     /**
      * Truncate the ZKDatabase to the specified zxid
+     *
      * @param zxid the zxid to truncate zk database to
      * @return true if the truncate is successful and false if not
      * @throws IOException
@@ -612,6 +640,7 @@ public class ZKDatabase {
 
     /**
      * deserialize a snapshot from an input archive
+     *
      * @param ia the input archive you want to deserialize from
      * @throws IOException
      */
@@ -623,6 +652,7 @@ public class ZKDatabase {
 
     /**
      * serialize the snapshot
+     *
      * @param oa the output archive to which the snapshot needs to be serialized
      * @throws IOException
      * @throws InterruptedException
@@ -633,6 +663,7 @@ public class ZKDatabase {
 
     /**
      * append to the underlying transaction log
+     *
      * @param si the request to append
      * @return true if the append was succesfull and false if not
      */
@@ -651,6 +682,7 @@ public class ZKDatabase {
 
     /**
      * commit to the underlying transaction log
+     *
      * @throws IOException
      */
     public void commit() throws IOException {
@@ -659,6 +691,7 @@ public class ZKDatabase {
 
     /**
      * close this database. free the resources
+     *
      * @throws IOException
      */
     public void close() throws IOException {
@@ -676,11 +709,11 @@ public class ZKDatabase {
                 this.dataTree.addConfigNode();
             }
             this.dataTree.setData(
-                ZooDefs.CONFIG_NODE,
-                qv.toString().getBytes(),
-                -1,
-                qv.getVersion(),
-                Time.currentWallTime());
+                    ZooDefs.CONFIG_NODE,
+                    qv.toString().getBytes(),
+                    -1,
+                    qv.getVersion(),
+                    Time.currentWallTime());
         } catch (NoNodeException e) {
             System.out.println("configuration node missing - should not happen");
         }
@@ -688,6 +721,7 @@ public class ZKDatabase {
 
     /**
      * Use for unit testing, so we can turn this feature on/off
+     *
      * @param snapshotSizeFactor Set to minus value to turn this off.
      */
     public void setSnapshotSizeFactor(double snapshotSizeFactor) {
@@ -697,12 +731,9 @@ public class ZKDatabase {
     /**
      * Check whether the given watcher exists in datatree
      *
-     * @param path
-     *            node to check watcher existence
-     * @param type
-     *            type of watcher
-     * @param watcher
-     *            watcher function
+     * @param path    node to check watcher existence
+     * @param type    type of watcher
+     * @param watcher watcher function
      */
     public boolean containsWatcher(String path, WatcherType type, Watcher watcher) {
         return dataTree.containsWatcher(path, type, watcher);
@@ -711,12 +742,9 @@ public class ZKDatabase {
     /**
      * Remove watch from the datatree
      *
-     * @param path
-     *            node to remove watches from
-     * @param type
-     *            type of watcher to remove
-     * @param watcher
-     *            watcher function to remove
+     * @param path    node to remove watches from
+     * @param type    type of watcher to remove
+     * @param watcher watcher function to remove
      */
     public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
         return dataTree.removeWatch(path, type, watcher);

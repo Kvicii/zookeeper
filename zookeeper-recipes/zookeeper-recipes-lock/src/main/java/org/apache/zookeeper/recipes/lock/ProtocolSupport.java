@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.recipes.lock;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -29,11 +27,14 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * A base class for protocol implementations which provides a number of higher
  * level helper methods for working with ZooKeeper along with retrying synchronous
- *  operations if the connection to ZooKeeper closes such as
- *  {@link #retryOperation(ZooKeeperOperation)}.
+ * operations if the connection to ZooKeeper closes such as
+ * {@link #retryOperation(ZooKeeperOperation)}.
  */
 class ProtocolSupport {
 
@@ -51,7 +52,7 @@ class ProtocolSupport {
 
     /**
      * Closes this strategy and releases any ZooKeeper resources; but keeps the
-     *  ZooKeeper instance open.
+     * ZooKeeper instance open.
      */
     public void close() {
         if (closed.compareAndSet(false, true)) {
@@ -119,7 +120,7 @@ class ProtocolSupport {
      * return type.
      */
     protected Object retryOperation(ZooKeeperOperation operation)
-        throws KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         KeeperException exception = null;
         for (int i = 0; i < RETRY_COUNT; i++) {
             try {
@@ -157,10 +158,10 @@ class ProtocolSupport {
      * @param flags
      */
     protected void ensureExists(
-        final String path,
-        final byte[] data,
-        final List<ACL> acl,
-        final CreateMode flags) {
+            final String path,
+            final byte[] data,
+            final List<ACL> acl,
+            final CreateMode flags) {
         try {
             retryOperation(() -> {
                 Stat stat = zookeeper.exists(path, false);

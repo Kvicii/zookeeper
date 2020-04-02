@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Represents an ephemeral znode name which has an ordered sequence number
  * and can be sorted in order.
- *
  */
 class ZNodeName implements Comparable<ZNodeName> {
 
@@ -83,8 +82,8 @@ class ZNodeName implements Comparable<ZNodeName> {
      *
      * @param that other znode to compare to
      * @return the difference between their sequence numbers: a positive value if this
-     *         znode has a larger sequence number, 0 if they have the same sequence number
-     *         or a negative number if this znode has a lower sequence number
+     * znode has a larger sequence number, 0 if they have the same sequence number
+     * or a negative number if this znode has a lower sequence number
      */
     public int compareTo(ZNodeName that) {
         int answer = this.sequence - that.sequence;
