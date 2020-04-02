@@ -65,6 +65,7 @@ import org.apache.zookeeper.cli.SyncCommand;
 import org.apache.zookeeper.cli.VersionCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +131,7 @@ public class ZooKeeperMain {
     }
 
     static void usage() {
-        System.err.println("ZooKeeper -server host:port cmd args");
+        System.err.println("ZooKeeper -server host:port -client-configuration properties-file cmd args");
         List<String> cmdList = new ArrayList<String>(commandMap.keySet());
         Collections.sort(cmdList);
         for (String cmd : cmdList) {
@@ -205,6 +206,8 @@ public class ZooKeeperMain {
                         options.put("timeout", it.next());
                     } else if (opt.equals("-r")) {
                         options.put("readonly", "true");
+                    } else if (opt.equals("-client-configuration")) {
+                        options.put("client-configuration", it.next());
                     }
                 } catch (NoSuchElementException e) {
                     System.err.println("Error: no argument found for option " + opt);
@@ -286,10 +289,22 @@ public class ZooKeeperMain {
             System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
             System.out.println("Secure connection is enabled");
         }
-        zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly);
+
+        ZKClientConfig clientConfig = null;
+
+        if (cl.getOption("client-configuration") != null) {
+            try {
+                clientConfig = new ZKClientConfig(cl.getOption("client-configuration"));
+            } catch (QuorumPeerConfig.ConfigException e) {
+                e.printStackTrace();
+                ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
+            }
+        }
+
+        zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly, clientConfig);
     }
 
-    public static void main(String[] args) throws CliException, IOException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         ZooKeeperMain main = new ZooKeeperMain(args);
         main.run();
     }
@@ -304,7 +319,7 @@ public class ZooKeeperMain {
         this.zk = zk;
     }
 
-    void run() throws CliException, IOException, InterruptedException {
+    void run() throws IOException, InterruptedException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
@@ -353,7 +368,7 @@ public class ZooKeeperMain {
         ServiceUtils.requestSystemExit(exitCode);
     }
 
-    public void executeLine(String line) throws CliException, InterruptedException, IOException {
+    public void executeLine(String line) throws InterruptedException, IOException {
         if (!line.equals("")) {
             cl.parseCommand(line);
             addToHistory(commandCount, line);
@@ -362,7 +377,7 @@ public class ZooKeeperMain {
         }
     }
 
-    protected boolean processCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException {
+    protected boolean processCmd(MyCommandOptions co) throws IOException, InterruptedException {
         boolean watch = false;
         try {
             watch = processZKCmd(co);
