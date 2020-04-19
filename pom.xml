@@ -31,7 +31,7 @@
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
-  <version>3.6.1-SNAPSHOT</version>
+  <version>3.6.2-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
@@ -258,6 +258,7 @@
     <profile>
       <id>full-build</id>
       <modules>
+        <module>zookeeper-it</module>
         <module>zookeeper-contrib</module>
       </modules>
     </profile>
@@ -353,7 +354,7 @@
     <mockito.version>2.27.0</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
-    <netty.version>4.1.45.Final</netty.version>
+    <netty.version>4.1.48.Final</netty.version>
     <jetty.version>9.4.24.v20191120</jetty.version>
     <jackson.version>2.10.3</jackson.version>
     <json.version>1.1.1</json.version>
