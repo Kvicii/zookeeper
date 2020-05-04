@@ -18,17 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.management.JMException;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
-import javax.security.auth.login.LoginException;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.common.ZKConfig;
@@ -36,6 +25,18 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.JMException;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginException;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ServerCnxnFactory {
 
@@ -74,7 +75,7 @@ public abstract class ServerCnxnFactory {
 
     /**
      * @return true if the cnxn that contains the sessionId exists in this ServerCnxnFactory
-     *         and it's closed. Otherwise false.
+     * and it's closed. Otherwise false.
      */
     public boolean closeSession(long sessionId, ServerCnxn.DisconnectReason reason) {
         ServerCnxn cnxn = sessionMap.remove(sessionId);
@@ -116,10 +117,14 @@ public abstract class ServerCnxnFactory {
     protected SaslServerCallbackHandler saslServerCallbackHandler;
     public Login login;
 
-    /** Maximum number of connections allowed from particular host (ip) */
+    /**
+     * Maximum number of connections allowed from particular host (ip)
+     */
     public abstract int getMaxClientCnxnsPerHost();
 
-    /** Maximum number of connections allowed from particular host (ip) */
+    /**
+     * Maximum number of connections allowed from particular host (ip)
+     */
     public abstract void setMaxClientCnxnsPerHost(int max);
 
     public boolean isSecure() {
@@ -134,7 +139,9 @@ public abstract class ServerCnxnFactory {
     // when we add secureCnxnFactory.
     public abstract void startup(ZooKeeperServer zkServer, boolean startServer) throws IOException, InterruptedException;
 
-    /** The maximum queue length of the ZooKeeper server's socket */
+    /**
+     * The maximum queue length of the ZooKeeper server's socket
+     */
     public abstract int getSocketListenBacklog();
 
     public abstract void join() throws InterruptedException;
@@ -144,6 +151,7 @@ public abstract class ServerCnxnFactory {
     public abstract void start();
 
     protected ZooKeeperServer zkServer;
+
     public final void setZooKeeperServer(ZooKeeperServer zks) {
         this.zkServer = zks;
         if (zks != null) {
@@ -164,8 +172,8 @@ public abstract class ServerCnxnFactory {
         }
         try {
             ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName)
-                                                                           .getDeclaredConstructor()
-                                                                           .newInstance();
+                    .getDeclaredConstructor()
+                    .newInstance();
             LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
             return serverCnxnFactory;
         } catch (Exception e) {
@@ -203,6 +211,7 @@ public abstract class ServerCnxnFactory {
     // Connection set is relied on heavily by four letter commands
     // Construct a ConcurrentHashSet using a ConcurrentHashMap
     protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(new ConcurrentHashMap<ServerCnxn, Boolean>());
+
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);
         if (jmxConnectionBean != null) {
@@ -225,7 +234,7 @@ public abstract class ServerCnxnFactory {
 
     /**
      * Initialize the server SASL if specified.
-     *
+     * <p>
      * If the user has specified a "ZooKeeperServer.LOGIN_CONTEXT_NAME_KEY"
      * or a jaas.conf using "java.security.auth.login.config"
      * the authentication is required and an exception is raised.
@@ -275,8 +284,8 @@ public abstract class ServerCnxnFactory {
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
-                                  + " ZooKeeper server to authenticate itself properly: "
-                                  + e);
+                    + " ZooKeeper server to authenticate itself properly: "
+                    + e);
         }
     }
 
@@ -284,6 +293,7 @@ public abstract class ServerCnxnFactory {
         //Created this method to avoid ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD find bug issue
         loginUser = name;
     }
+
     /**
      * User who has started the ZooKeeper server user, it will be the logged-in
      * user. If no user logged-in then system user

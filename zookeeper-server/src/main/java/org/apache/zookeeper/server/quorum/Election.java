@@ -18,9 +18,23 @@
 
 package org.apache.zookeeper.server.quorum;
 
+/**
+ * 用于Leader选举的接口
+ * 其实现 {@link FastLeaderElection} 是标准的fast paxos算法的实现 基于tcp协议进行选举
+ */
 public interface Election {
 
+    /**
+     * 寻找Leader
+     *
+     * @return
+     * @throws InterruptedException
+     */
     Vote lookForLeader() throws InterruptedException;
+
+    /**
+     * 关闭服务端之间的连接
+     */
     void shutdown();
 
 }
